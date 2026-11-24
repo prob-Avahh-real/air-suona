@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1a0e0c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>空气唢呐</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --ink: #1a0e0c;
+      --deep: #0c0706;
+      --foam: #f6efe6;
+      --muted: #b89a82;
+      --kit: #e8a54b;
+      --kit-dim: color-mix(in srgb, var(--kit) 32%, transparent);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+      --safe-t: env(safe-area-inset-top, 0px);
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: "Noto Sans SC", "Bricolage Grotesque", sans-serif;
+      color: var(--foam);
+      background:
+        radial-gradient(ellipse 75% 50% at 20% -8%, var(--kit-dim), transparent 55%),
+        radial-gradient(ellipse 55% 40% at 95% 85%, rgba(196, 92, 74, 0.22), transparent 50%),
+        linear-gradient(168deg, #2c1612 0%, var(--ink) 48%, var(--deep) 100%);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: calc(12px + var(--safe-t)) 16px calc(16px + var(--safe-b));
+      user-select: none;
+      transition: background 0.4s ease;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .brand {
+      font-family: "Bricolage Grotesque", "Noto Sans SC", sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.35rem, 5vw, 1.75rem);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      animation: brandIn 0.7s ease-out both;
+    }
+    .brand span {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+    .badges { display: flex; flex-direction: column; gap: 6px; }
+    .badge {
+      font-size: 0.68rem;
+      padding: 6px 10px;
+      border: 1px solid rgba(184, 154, 130, 0.35);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(12, 7, 6, 0.45);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .badge.active {
+      color: var(--kit);
+      border-color: color-mix(in srgb, var(--kit) 55%, transparent);
+      background: color-mix(in srgb, var(--kit) 18%, transparent);
+    }
+
+    .scale-tabs {
+      display: flex;
+      gap: 6px;
+      margin: 10px 0 14px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .scale-tabs::-webkit-scrollbar { display: none; }
+    .scale-tab {
+      flex: 0 0 auto;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s;
+    }
+    .scale-tab.active {
+      color: var(--deep);
+      background: var(--kit);
+    }
+
+    #stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      min-height: 0;
+    }
+
+    .note-display {
+      text-align: center;
+      margin-bottom: 8px;
+      z-index: 2;
+      animation: rise 0.55s ease-out both;
+    }
+    .note-display .scale {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .note-display .name {
+      font-family: "Bricolage Grotesque", "Noto Sans SC", sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.8rem, 14vw, 4.5rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      color: var(--foam);
+      text-shadow: 0 8px 40px color-mix(in srgb, var(--kit) 40%, transparent);
+    }
+    .note-display .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .suona-wrap {
+      position: relative;
+      width: min(220px, 64vw);
+      height: min(280px, 78vw);
+      display: grid;
+      place-items: center;
+      margin: 4px 0 8px;
+    }
+    #ripple {
+      position: absolute;
+      width: 70%;
+      height: 28%;
+      bottom: 8%;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      pointer-events: none;
+    }
+    #suona-visual.blowing ~ #ripple,
+    .suona-wrap:has(#suona-visual.blowing) #ripple {
+      animation: rip 1.1s ease-out infinite;
+    }
+    #suona-visual {
+      width: 42%;
+      height: 88%;
+      position: relative;
+      border-radius: 40% 40% 18% 18% / 8% 8% 20% 20%;
+      background:
+        linear-gradient(180deg, #f0c56a 0%, #c47a28 18%, #8a3a18 55%, #4a1e0c 100%);
+      box-shadow:
+        inset 0 0 0 3px rgba(40, 18, 8, 0.35),
+        0 18px 40px rgba(0, 0, 0, 0.45);
+      transition: transform 0.2s ease, filter 0.2s;
+    }
+    #suona-visual::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -6%;
+      transform: translateX(-50%);
+      width: 28%;
+      height: 14%;
+      border-radius: 40%;
+      background: linear-gradient(180deg, #2a1810, #0c0706);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--kit) 40%, transparent);
+    }
+    #suona-visual::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -4%;
+      transform: translateX(-50%);
+      width: 160%;
+      height: 28%;
+      border-radius: 50%;
+      background:
+        radial-gradient(ellipse at 50% 30%, #f2c86a 0%, #c45c2a 45%, #5a220c 100%);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+    }
+    #suona-visual.blowing {
+      transform: scale(1.04);
+      filter: drop-shadow(0 0 18px color-mix(in srgb, var(--kit) 55%, transparent));
+      animation: breathPulse 0.9s ease-in-out infinite;
+    }
+
+    .note-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      width: 100%;
+      max-width: 420px;
+      margin: 10px auto 0;
+    }
+    .note-btn {
+      border: 1px solid rgba(184, 154, 130, 0.28);
+      background: rgba(12, 7, 6, 0.45);
+      color: var(--foam);
+      font: inherit;
+      padding: 12px 6px;
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: transform 0.15s, background 0.2s, border-color 0.2s;
+    }
+    .note-btn .note-short {
+      font-family: "Bricolage Grotesque", "Noto Sans SC", sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+    .note-btn .note-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+    .note-btn.active {
+      background: color-mix(in srgb, var(--kit) 28%, rgba(12, 7, 6, 0.6));
+      border-color: color-mix(in srgb, var(--kit) 55%, transparent);
+      transform: translateY(-2px);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+      width: 100%;
+      max-width: 420px;
+      align-self: center;
+    }
+    .controls button {
+      border: none;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.92rem;
+      padding: 16px 10px;
+      border-radius: 16px;
+      cursor: pointer;
+      color: var(--foam);
+      background: rgba(12, 7, 6, 0.55);
+      border: 1px solid rgba(184, 154, 130, 0.28);
+      touch-action: none;
+    }
+    #blow-btn {
+      background: linear-gradient(160deg, color-mix(in srgb, var(--kit) 90%, #fff), var(--kit));
+      color: #1a0e0c;
+      border: none;
+      font-size: 1.05rem;
+      letter-spacing: 0.04em;
+    }
+    #blow-btn.on {
+      background: linear-gradient(160deg, #fff0d0, var(--kit));
+      box-shadow: 0 0 24px color-mix(in srgb, var(--kit) 45%, transparent);
+    }
+    #mute-btn.on {
+      color: #ffb4a8;
+      border-color: rgba(255, 180, 168, 0.45);
+    }
+
+    .help {
+      text-align: center;
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(24px + var(--safe-b));
+      transform: translateX(-50%) translateY(12px);
+      background: rgba(12, 7, 6, 0.92);
+      border: 1px solid color-mix(in srgb, var(--kit) 40%, transparent);
+      color: var(--kit);
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 40;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @keyframes brandIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes rip {
+      0% { transform: scale(0.85); border-color: color-mix(in srgb, var(--kit) 55%, transparent); opacity: 0.9; }
+      100% { transform: scale(1.55); border-color: transparent; opacity: 0; }
+    }
+    @keyframes breathPulse {
+      0%, 100% { transform: scale(1.03); }
+      50% { transform: scale(1.06); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 280px), (max-height: 300px) {
+      body { padding: 6px; }
+      .brand { font-size: 0.95rem; }
+      .brand span, .help, .badges, #stop-btn, #mute-btn { display: none; }
+      .scale-tabs { margin: 4px 0 6px; }
+      .scale-tab { font-size: 0.65rem; padding: 4px 8px; }
+      .note-display .name { font-size: 1.8rem; }
+      .note-display .scale, .note-display .hint { font-size: 0.55rem; }
+      .suona-wrap { width: 70px; height: 90px; }
+      .note-grid { gap: 4px; margin-top: 4px; }
+      .note-btn { padding: 6px 2px; border-radius: 8px; }
+      .note-btn .note-short { font-size: 0.75rem; }
+      .note-btn .note-label { display: none; }
+      .controls { grid-template-columns: 1fr; margin-top: 6px; }
+      #blow-btn { padding: 10px; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <h1 class="brand">空气唢呐<span>Air Suona</span></h1>
+    <div class="badges">
+      <div class="badge" id="mic-badge">麦克风 · 点击启用</div>
+      <div class="badge" id="ring-badge">戒指 · 点击启用</div>
+      <div class="badge" id="cane-badge">手杖 · 点击启用</div>
+    </div>
+  </header>
+
+  <div class="scale-tabs" id="scale-tabs" aria-label="调式"></div>
+
+  <main id="stage">
+    <div class="note-display">
+      <div class="scale" id="scale-name">喜庆</div>
+      <div class="name" id="note-name">宫</div>
+      <div class="hint" id="note-hint">D4 · 1 / 6</div>
+    </div>
+
+    <div class="suona-wrap" aria-hidden="true">
+      <div id="suona-visual" data-note="宫"></div>
+      <div id="ripple"></div>
+    </div>
+
+    <div class="note-grid" id="note-grid"></div>
+  </main>
+
+  <div class="controls">
+    <button type="button" id="stop-btn">收气</button>
+    <button type="button" id="blow-btn">吹奏</button>
+    <button type="button" id="mute-btn">静音</button>
+  </div>
+  <p class="help">戒指左右切换音孔 · 上下切换调式 · 手杖挥动吹奏 · 敲击收气<br>按住吹奏发声 · 键盘 1–6 选音 · 空格吹 · S 停</p>
+
+  <div id="toast" role="status"></div>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{
+  "name": "air-suona",
+  "version": "1.0.0",
+  "description": "空气唢呐手势与调式协议",
+  "instrument": "suona",
+  "gestures": {
+    "ring": {
+      "tilt_left": { "action": "prev_note", "threshold_deg": 5, "throttle_frames": 8 },
+      "tilt_right": { "action": "next_note", "threshold_deg": 5, "throttle_frames": 8 },
+      "tilt_up": { "action": "prev_scale", "threshold_deg": 5, "throttle_frames": 8 },
+      "tilt_down": { "action": "next_scale", "threshold_deg": 5, "throttle_frames": 8 },
+      "shake": { "action": "toggle_mute", "threshold_deg": 20, "throttle_frames": 8 }
+    },
+    "cane": {
+      "swing": { "action": "blow", "threshold": 3, "throttle_frames": 6 },
+      "tap": { "action": "stop", "accel_spike": 8, "throttle_frames": 6 }
+    }
+  },
+  "scales": [
+    {
+      "id": "festive",
+      "label": "喜庆",
+      "notes": ["D4", "E4", "F#4", "A4", "B4", "D5"]
+    },
+    {
+      "id": "solemn",
+      "label": "悲壮",
+      "notes": ["A3", "C4", "D4", "E4", "G4", "A4"]
+    },
+    {
+      "id": "folk",
+      "label": "民歌",
+      "notes": ["G3", "A3", "C4", "D4", "E4", "G4"]
+    },
+    {
+      "id": "opera",
+      "label": "戏曲",
+      "notes": ["C4", "D4", "E4", "G4", "A4", "C5"]
+    }
+  ]
+}
